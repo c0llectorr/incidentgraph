@@ -1,0 +1,14 @@
+/**
+ * IncidentGraph triadic palette (PRD §12.2). These tokens are the single
+ * source of color truth; Tailwind maps them 1:1 in tailwind.config.ts.
+ */
+:root {
+  --ig-navy: #363f58;
+  --ig-blue: #3d5185;
+  --ig-green: #2eb255;
+  --ig-bg: #f6f7fa;
+  --ig-surface: #ffffff;
+  --ig-border: #dce1ea;
+  --ig-muted: #687386;
+  --ig-danger: #b54747;
+}
