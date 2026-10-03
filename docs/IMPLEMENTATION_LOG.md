@@ -16,8 +16,8 @@ Per-WP journal required by `INCIDENTGRAPH_IMPLEMENTATION.md` §0.6: what was bui
 - [x] Structure matches canonical trees
 - [x] Dependency set installed
 - [x] Frontend build passes
-- [x] Local embedding smoke: `Qwen/Qwen3-Embedding-0.6B` loaded via sentence-transformers (dimension + two-text encode verified) — see entry below
-- [ ] Groq smoke: **blocked on user-supplied `GROQ_API_KEY`**; the provider path is fully implemented and error-mapped, and to run the smoke: set `GROQ_API_KEY` in `.env` and ask any chat question.
+- [x] Local embedding smoke: `Qwen/Qwen3-Embedding-0.6B` loaded via sentence-transformers, **dimension 1024 verified with a two-text encode** (first download ≈17 min on this connection; now cached). A deprecation warning surfaced by the smoke was fixed (`get_embedding_dimension` with fallback for older pins).
+- [ ] Groq smoke: **blocked on user-supplied `GROQ_API_KEY`**; the provider path is fully implemented and error-mapped. To run the smoke: set `GROQ_API_KEY` in `.env` and ask any chat question.
 
 ---
 

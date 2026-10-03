@@ -63,7 +63,11 @@ class QwenEmbeddingProvider:
             ) from exc
         logger.info("Loading local embedding model %s (first run downloads it)", self._model_id)
         self._model = SentenceTransformer(self._settings.qwen_embedding_model)
-        self._dimension = int(self._model.get_sentence_embedding_dimension())
+        # sentence-transformers renamed the accessor; fall back for older pins.
+        dimension_getter = getattr(
+            self._model, "get_embedding_dimension", None
+        ) or self._model.get_sentence_embedding_dimension
+        self._dimension = int(dimension_getter())
 
     def _embed_local(self, texts: list[str]) -> list[list[float]]:
         self._load_local()

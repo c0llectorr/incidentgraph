@@ -64,9 +64,11 @@ npm run dev            # http://localhost:5173 (proxies /api → :8000)
 ### Embedding model
 
 The default (`EMBEDDING_PROVIDER=local`) loads `Qwen/Qwen3-Embedding-0.6B`
-via sentence-transformers on first use — the download is ~1.2 GB and needs
-roughly 2 GB RAM headroom; the cache lives in your HuggingFace cache
-directory. If the host cannot load it, set `EMBEDDING_PROVIDER=remote` plus
+via sentence-transformers on first use — verified working: the download is
+~1.2 GB (took ≈17 minutes on a consumer connection here), needs roughly
+2 GB RAM headroom, yields 1024-dimension vectors, and caches in your
+HuggingFace cache directory (subsequent loads are seconds). If the host
+cannot load it, set `EMBEDDING_PROVIDER=remote` plus
 `EMBEDDING_REMOTE_BASE_URL` / `EMBEDDING_REMOTE_API_KEY` /
 `EMBEDDING_REMOTE_MODEL` (any OpenAI-compatible `/embeddings` endpoint).
 Do not assume Groq serves embeddings — it serves the chat model only.
