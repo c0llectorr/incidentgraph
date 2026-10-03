@@ -38,6 +38,10 @@ def new_message_id() -> str:
     return f"msg_{_short_uuid()}"
 
 
+def new_verification_id() -> str:
+    return f"vrf_{_short_uuid()}"
+
+
 def new_index_version() -> str:
     return f"idx_{_short_uuid()}"
 

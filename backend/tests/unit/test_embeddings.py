@@ -90,8 +90,8 @@ def test_hashing_provider_is_deterministic_and_ordered() -> None:
 def test_dimension_mismatch_is_rejected() -> None:
     store = InMemoryVectorStore()
     store.dimension = 4
+    from app.domain.enums import ChunkingMethod, ChunkType
     from app.domain.models import CodeChunk
-    from app.domain.enums import ChunkType, ChunkingMethod
 
     chunk = CodeChunk(
         chunk_id="chk_x", repository_id="r", index_version="i", path="a.py",

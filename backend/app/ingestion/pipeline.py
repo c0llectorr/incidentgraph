@@ -14,9 +14,9 @@ from pathlib import Path
 
 from app.core.config import Settings
 from app.core.errors import (
+    IncidentGraphError,
     IndexNotReadyError,
     InvalidSourceError,
-    IncidentGraphError,
     LimitExceededError,
     ProviderError,
 )
@@ -271,7 +271,7 @@ class IngestionPipeline:
                         f"Embedding failed for {len(batch_result.failures)} batch(es); "
                         "the index was not completed."
                     )
-                for (content_hash, _text), vector in zip(missing_texts, batch_result.vectors):
+                for (content_hash, _text), vector in zip(missing_texts, batch_result.vectors, strict=False):
                     vectors_by_hash[content_hash] = vector  # type: ignore[assignment]
                 progress.advance(
                     IngestionStage.EMBEDDING,

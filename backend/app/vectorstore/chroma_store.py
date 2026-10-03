@@ -89,7 +89,7 @@ class ChromaVectorStore:
         documents = result.get("documents", [[]])[0]
         metadatas = result.get("metadatas", [[]])[0]
         distances = result.get("distances", [[]])[0]
-        for chunk_id, document, metadata, distance in zip(ids, documents, metadatas, distances):
+        for chunk_id, document, metadata, distance in zip(ids, documents, metadatas, distances, strict=False):
             chunks.append(
                 RetrievedChunk(
                     chunk_id=chunk_id,
@@ -124,7 +124,7 @@ class ChromaVectorStore:
             return {}
         found = self._collection.get(ids=chunk_ids, include=["embeddings"])
         vectors: dict[str, list[float]] = {}
-        for chunk_id, embedding in zip(found.get("ids", []), found.get("embeddings", []) or []):
+        for chunk_id, embedding in zip(found.get("ids", []), found.get("embeddings", []) or [], strict=False):
             if embedding is not None:
                 vectors[chunk_id] = [float(value) for value in embedding]
         return vectors

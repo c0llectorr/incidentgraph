@@ -12,7 +12,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from app.domain.enums import ChunkType, ChunkingMethod, EvidenceType
+from app.domain.enums import ChunkingMethod, ChunkType, EvidenceType
 
 HypothesisStatus = Literal[
     "unverified", "supported", "weakened", "user_verified", "insufficient_evidence"

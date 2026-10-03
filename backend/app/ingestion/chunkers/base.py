@@ -4,7 +4,7 @@ content hashes, and stable deterministic IDs (PRD FR-12/FR-13, §9.2)."""
 from __future__ import annotations
 
 from app.core.ids import content_hash, stable_chunk_id
-from app.domain.enums import ChunkType, ChunkingMethod
+from app.domain.enums import ChunkingMethod, ChunkType
 from app.domain.models import CodeChunk
 from app.domain.policies import estimate_tokens
 

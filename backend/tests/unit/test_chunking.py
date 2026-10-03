@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from app.core.config import Settings
-from app.domain.enums import ChunkType, ChunkingMethod
+from app.domain.enums import ChunkingMethod, ChunkType
 from app.ingestion.chunkers.ast_chunker import AstChunker
 from app.ingestion.chunkers.heading_chunker import HeadingChunker
 from app.ingestion.chunkers.line_chunker import LineChunker
@@ -113,7 +113,7 @@ def test_oversized_function_splits_at_line_boundaries(tmp_path) -> None:
     assert len(chunks) >= 2
     assert all(c.chunking_method == ChunkingMethod.PYTHON_AST for c in chunks)
     # No gap: consecutive pieces continue where the previous ended.
-    for first, second in zip(chunks, chunks[1:]):
+    for first, second in zip(chunks, chunks[1:], strict=False):
         assert second.start_line == first.end_line + 1
 
 

@@ -21,7 +21,7 @@ from app.llm.prompts import QA_SYSTEM_PROMPT, build_qa_user_prompt
 from app.persistence.models import ConversationMessageRow
 from app.persistence.repositories import MessageRepository, RepositoryRepository
 from app.persistence.unit_of_work import UnitOfWork
-from app.retrieval.context_builder import ContextBundle, ContextBuilder
+from app.retrieval.context_builder import ContextBuilder
 from app.retrieval.dense_retriever import DenseRetriever
 from app.retrieval.fusion import reciprocal_rank_fusion
 from app.retrieval.lexical_retriever import LexicalRetriever

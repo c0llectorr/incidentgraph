@@ -1,4 +1,4 @@
-"""Use cases for repository intake (PRD §8.2 services/ row; FR-01..04).
+"""Use cases for repository intake and deletion (PRD §8.2 services/; FR-01..04).
 
 Provenance is recorded at creation (FR-04): source reference, branch/commit,
 timestamp, and a configuration fingerprint covering every setting that would
@@ -8,6 +8,9 @@ change ingestion output.
 from __future__ import annotations
 
 import json
+import shutil
+from collections.abc import Callable
+from typing import Any
 
 from app.core.config import Settings
 from app.core.errors import LimitExceededError, NotFoundError
@@ -15,8 +18,8 @@ from app.core.ids import content_hash, new_repository_id
 from app.core.logging import get_logger
 from app.core.security import normalize_github_url
 from app.persistence.models import RepositoryRow
-from app.persistence.unit_of_work import UnitOfWork
 from app.persistence.repositories import RepositoryRepository
+from app.persistence.unit_of_work import UnitOfWork
 
 logger = get_logger(__name__)
 
@@ -48,6 +51,8 @@ class RepositoryService:
     def __init__(self, settings: Settings, uow: UnitOfWork) -> None:
         self._settings = settings
         self._uow = uow
+        # Wired by the container as a lazy callable so test overrides apply.
+        self.vector_store_provider: Callable[[], Any] | None = None
 
     def create_from_github_url(self, raw_url: str) -> RepositoryRow:
         source = normalize_github_url(raw_url)
@@ -97,3 +102,56 @@ class RepositoryService:
                 raise NotFoundError("Repository not found.")
             session.expunge(row)
             return row
+
+    def delete_everything(self, repository_id: str) -> dict[str, int]:
+        """Delete a repository and ALL related data (PRD §6.1): chunks, file
+        records, vectors, jobs, incidents, artifacts, messages, uploads."""
+        from app.core.errors import DeletionFailedError
+        from app.persistence.repositories import (
+            ChunkRepository,
+            FileRecordRepository,
+            IncidentRepository,
+            JobRepository,
+            MessageRepository,
+        )
+
+        with self._uow.begin() as session:
+            if RepositoryRepository().get(session, repository_id) is None:
+                raise NotFoundError("Repository not found.")
+
+        vectors_deleted = 0
+        if self.vector_store_provider is not None:
+            try:
+                vectors_deleted = self.vector_store_provider().delete_by_repository(repository_id)
+            except Exception as exc:  # noqa: BLE001 - surfaced as a failed op
+                raise DeletionFailedError(
+                    "Could not delete the repository's vectors; nothing was removed."
+                ) from exc
+
+        with self._uow.begin() as session:
+            incidents, artifacts, _hypotheses = IncidentRepository().delete_by_repository(
+                session, repository_id
+            )
+            jobs = JobRepository().delete_by_repository(session, repository_id)
+            chunks = ChunkRepository().delete_by_repository(session, repository_id)
+            FileRecordRepository().delete_by_repository(session, repository_id)
+            messages = MessageRepository().delete_by_repository(session, repository_id)
+            RepositoryRepository().delete(session, repository_id)
+
+        shutil.rmtree(self._settings.upload_dir / repository_id, ignore_errors=True)
+        logger.info(
+            "Repository %s deleted: %d vectors, %d jobs, %d incidents, %d artifacts",
+            repository_id,
+            vectors_deleted,
+            jobs,
+            incidents,
+            artifacts,
+        )
+        return {
+            "deleted_chunks": chunks,
+            "deleted_vectors": vectors_deleted,
+            "deleted_jobs": jobs,
+            "deleted_incidents": incidents,
+            "deleted_artifacts": artifacts,
+            "deleted_messages": messages,
+        }

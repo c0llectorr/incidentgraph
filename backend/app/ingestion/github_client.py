@@ -10,7 +10,7 @@ from __future__ import annotations
 import httpx
 
 from app.core.config import Settings
-from app.core.errors import LimitExceededError, ProviderError, RepositoryFetchFailedError
+from app.core.errors import LimitExceededError, RepositoryFetchFailedError
 from app.core.logging import get_logger
 from app.core.retry import retry_transient
 from app.core.security import assert_safe_fetch_url

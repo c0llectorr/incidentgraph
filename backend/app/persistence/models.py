@@ -7,14 +7,14 @@ chunks and everything else. API schemas stay separate from these models
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Base(DeclarativeBase):
@@ -46,7 +46,7 @@ class IngestionJobRow(Base):
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
     repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id"))
-    repository: Mapped["RepositoryRow"] = relationship()
+    repository: Mapped[RepositoryRow] = relationship()
     stage: Mapped[str] = mapped_column(String(40), default="validating_source")
     status: Mapped[str] = mapped_column(String(20), default="queued")
     percent: Mapped[float] = mapped_column(Float, default=0.0)
@@ -103,7 +103,7 @@ class IncidentRow(Base):
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
     repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id"))
-    repository: Mapped["RepositoryRow"] = relationship()
+    repository: Mapped[RepositoryRow] = relationship()
     index_version: Mapped[str] = mapped_column(String(40))
     title: Mapped[str] = mapped_column(Text)
     description: Mapped[str] = mapped_column(Text)
@@ -130,7 +130,7 @@ class IncidentArtifactRow(Base):
 
     artifact_id: Mapped[str] = mapped_column(String(40), primary_key=True)
     incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"))
-    incident: Mapped["IncidentRow"] = relationship()
+    incident: Mapped[IncidentRow] = relationship()
     repository_id: Mapped[str] = mapped_column(String(40))
     index_version: Mapped[str] = mapped_column(String(40))
     type: Mapped[str] = mapped_column(String(20))
@@ -144,7 +144,7 @@ class HypothesisRow(Base):
 
     hypothesis_id: Mapped[str] = mapped_column(String(40), primary_key=True)
     incident_id: Mapped[str] = mapped_column(ForeignKey("incidents.id"))
-    incident: Mapped["IncidentRow"] = relationship()
+    incident: Mapped[IncidentRow] = relationship()
     title: Mapped[str] = mapped_column(Text)
     explanation: Mapped[str] = mapped_column(Text)
     supporting_evidence: Mapped[list | None] = mapped_column(JSON, nullable=True)

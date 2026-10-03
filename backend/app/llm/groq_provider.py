@@ -6,12 +6,12 @@ are retried; permanent validation/auth errors propagate immediately."""
 
 from __future__ import annotations
 
+from pydantic import BaseModel as PydanticBaseModel
+
 from app.core.config import Settings
 from app.core.errors import ProviderError
 from app.core.retry import retry_transient
 from app.llm.output_parsers import parse_structured
-
-from pydantic import BaseModel as PydanticBaseModel
 
 
 class GroqChatProvider:

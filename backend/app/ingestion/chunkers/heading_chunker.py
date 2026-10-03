@@ -4,7 +4,7 @@ line boundaries. Never claims AST chunking for Markdown."""
 from __future__ import annotations
 
 from app.core.config import Settings
-from app.domain.enums import ChunkType, ChunkingMethod
+from app.domain.enums import ChunkingMethod, ChunkType
 from app.domain.models import CodeChunk
 from app.domain.policies import estimate_tokens
 from app.ingestion.chunkers.base import build_chunk, split_bounded_lines

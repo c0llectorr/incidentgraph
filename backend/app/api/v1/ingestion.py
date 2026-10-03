@@ -14,8 +14,8 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from app.api.dependencies import get_container
-from app.schemas.ingestion import IngestionStartResponse, JobStatusOut
 from app.jobs.events import TERMINAL_JOB_STATUSES
+from app.schemas.ingestion import IngestionStartResponse, JobStatusOut
 
 router = APIRouter()
 

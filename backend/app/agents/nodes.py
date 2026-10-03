@@ -10,6 +10,7 @@ import json
 from typing import Any
 
 from app.agents.state import InvestigationState
+from app.core.ids import new_verification_id
 from app.domain.enums import InvestigationStatus
 from app.domain.models import RetrievedChunk, Signal, VerificationStep
 from app.llm.output_parsers import (
@@ -22,10 +23,9 @@ from app.llm.prompts import (
     RCA_REVIEW_SYSTEM_PROMPT,
     build_rca_evidence_block,
 )
-from app.retrieval.context_builder import ContextBundle, ContextBuilder
+from app.retrieval.context_builder import ContextBuilder, ContextBundle
 from app.retrieval.fusion import reciprocal_rank_fusion
 from app.retrieval.query_rewriter import QueryPlan, build_query_plan
-from app.core.ids import new_verification_id
 
 _MAX_NORMALIZE_EVIDENCE_CHARS = 6_000
 

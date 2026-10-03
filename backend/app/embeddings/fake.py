@@ -17,7 +17,7 @@ _TOKEN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 class HashingEmbeddingProvider:
     model_id = "hashing-embedder-v1"
-    dimension = 256
+    dimension = 1024
 
     def _vectorize(self, text: str) -> list[float]:
         vector = [0.0] * self.dimension

@@ -5,7 +5,7 @@ in separate sections (FR-40); unknown fields render as visibly unknown."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.domain.models import (
     Hypothesis,
@@ -63,7 +63,7 @@ class ReportService:
             if not incident.affected_endpoint and not incident.affected_service
             else [],
             evidence_gaps=[str(item) for item in (incident.evidence_gaps or [])],
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             is_partial=is_partial,
             postmortem=self.postmortem_draft(incident, hypotheses),
         )

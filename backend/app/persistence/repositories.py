@@ -3,7 +3,7 @@ use-case orchestration lives in services/ (PRD §8.2)."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
@@ -48,7 +48,7 @@ class RepositoryRepository:
             row.file_count = file_count
         if commit_sha is not None:
             row.commit_sha = commit_sha
-        row.updated_at = datetime.now(timezone.utc)
+        row.updated_at = datetime.now(UTC)
         return row
 
     def delete(self, session: Session, repository_id: str) -> bool:

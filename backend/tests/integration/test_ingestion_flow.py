@@ -172,8 +172,6 @@ def test_idempotent_reingestion_reuses_unchanged_chunks(
         )
 
     # No file changes: re-ingest produces the same stable IDs.
-    client.query  # silence
-    from app.services.repository_service import RepositoryService  # noqa: F401
 
     ingest_and_wait(client, uploaded_repository["id"])
     with container.uow.begin() as session:

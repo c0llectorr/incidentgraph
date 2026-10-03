@@ -3,11 +3,11 @@ ZIP upload) and GET /repositories/{id}. No business logic lives here."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi import APIRouter, Request
 
 from app.api.dependencies import get_container
 from app.core.errors import InvalidSourceError
-from app.schemas.repository import RepositoryCreateFromUrl, RepositoryOut
+from app.schemas.repository import RepositoryCreateFromUrl, RepositoryDeleted, RepositoryOut
 
 router = APIRouter()
 
@@ -57,3 +57,11 @@ def get_repository(repository_id: str) -> RepositoryOut:
     service = get_container().repository_service
     assert service is not None
     return RepositoryOut.model_validate(service.get(repository_id), from_attributes=True)
+
+
+@router.delete("/repositories/{repository_id}", response_model=RepositoryDeleted)
+def delete_repository(repository_id: str) -> RepositoryDeleted:
+    service = get_container().repository_service
+    assert service is not None
+    counts = service.delete_everything(repository_id)
+    return RepositoryDeleted(repository_id=repository_id, **counts)

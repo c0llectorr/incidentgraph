@@ -10,8 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
-from app.domain.models import CodeChunk, RetrievedChunk
 from app.domain.enums import ChunkingMethod, ChunkType
+from app.domain.models import CodeChunk, RetrievedChunk
 
 
 @dataclass(frozen=True)

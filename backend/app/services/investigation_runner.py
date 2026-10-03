@@ -17,7 +17,6 @@ from app.core.errors import IndexNotReadyError, NotFoundError, WorkflowNodeFaile
 from app.core.ids import new_hypothesis_id
 from app.core.logging import get_logger
 from app.domain.enums import InvestigationStatus
-from app.domain.models import WorkflowErrorRecord
 from app.domain.policies import can_transition
 from app.persistence.models import HypothesisRow
 from app.persistence.repositories import IncidentRepository, RepositoryRepository
@@ -103,11 +102,10 @@ class InvestigationRunner:
             final: InvestigationState = graph.invoke(initial, config={"recursion_limit": 25})
         except Exception as exc:
             logger.exception("Investigation workflow failed for %s", incident_id)
-            record = WorkflowErrorRecord(
-                node="workflow",
-                code=getattr(exc, "code", "WORKFLOW_NODE_FAILED"),
-                message=str(exc)[:300],
-                retryable=True,
+            node = getattr(exc, "node", "workflow")
+            code = getattr(exc, "code", "WORKFLOW_NODE_FAILED")
+            logger.error(
+                "Workflow error at node=%s code=%s: %s", node, code, str(exc)[:300]
             )
             self._incidents.update_state(
                 incident_id, status=InvestigationStatus.FAILED.value
@@ -118,7 +116,7 @@ class InvestigationRunner:
             detail["status"] = InvestigationStatus.FAILED.value
             return detail
 
-        self._persist_workflow_outputs(incident_id, final_state=final, error=None)
+        self._persist_workflow_outputs(incident_id, final_state=final)
         return self.detail(incident_id)
 
     def record_outcome(self, incident_id: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -155,7 +153,6 @@ class InvestigationRunner:
                             f"Illegal hypothesis transition {row.status} → {new_status}."
                         )
                     row.status = new_status
-                    row.updated_at = None  # onupdate handles it
 
         self._incidents.update_state(incident_id, verification_plan=plan)
         return self.detail(incident_id)

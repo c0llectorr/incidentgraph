@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 from app.api.dependencies import get_container
 from app.domain.models import Hypothesis
+from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.incident import (
     EvidenceIn,
     IncidentArtifactOut,
@@ -16,7 +17,6 @@ from app.schemas.incident import (
     IncidentOut,
     OutcomesIn,
 )
-from app.schemas.chat import ChatRequest, ChatResponse
 
 router = APIRouter()
 

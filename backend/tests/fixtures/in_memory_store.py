@@ -20,7 +20,7 @@ class InMemoryVectorStore:
             self.dimension = dimension
         elif self.dimension != dimension:
             raise ProviderError("dimension mismatch")
-        for chunk, vector in zip(chunks, vectors):
+        for chunk, vector in zip(chunks, vectors, strict=False):
             self._rows[chunk.chunk_id] = (chunk, vector)
 
     def search(
@@ -35,7 +35,7 @@ class InMemoryVectorStore:
         for chunk, vector in self._rows.values():
             if chunk.repository_id != repository_id or chunk.index_version != index_version:
                 continue
-            similarity = sum(a * b for a, b in zip(query_vector, vector))
+            similarity = sum(a * b for a, b in zip(query_vector, vector, strict=False))
             scored.append((similarity, chunk))
         scored.sort(key=lambda pair: pair[0], reverse=True)
         return [chunk.to_retrieved(round(score, 6)) for score, chunk in scored[:top_k]]

@@ -44,7 +44,6 @@ _LANGUAGE_BY_SUFFIX = {
     ".txt": "text",
     ".cfg": "ini",
     ".ini": "ini",
-    ".cfg": "ini",
     ".rst": "text",
 }
 

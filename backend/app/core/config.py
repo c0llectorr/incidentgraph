@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     max_total_extracted_bytes: int = 100_000_000
     chunk_token_limit: int = 900
     retrieval_top_k: int = 8
+    retrieval_min_score: float = 0.05
     max_context_tokens: int = 12_000
 
     # --- Operational extensions (documented in .env.example / README) ---

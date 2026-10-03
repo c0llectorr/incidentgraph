@@ -12,7 +12,6 @@ from app.agents.nodes import NodeSet
 from app.agents.state import InvestigationState
 from app.agents.transitions import (
     route_after_normalize,
-    route_after_repair,
     route_after_retrieval,
     route_after_validation,
 )

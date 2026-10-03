@@ -25,3 +25,4 @@ class InvestigationState(TypedDict, total=False):
     errors: list[dict]  # WorkflowErrorRecord dicts
     resume: bool
     repair_attempted: bool
+    has_evidence: bool

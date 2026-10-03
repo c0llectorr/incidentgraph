@@ -81,6 +81,9 @@ class AppContainer:
             from app.services.signal_extractor import IncidentSignalExtractor
 
             self._extras["signal_extractor"] = IncidentSignalExtractor()
+        # Deletion needs the vector store, but lazily (test overrides).
+        assert self.repository_service is not None
+        self.repository_service.vector_store_provider = self.build_vector_store
 
     # -- adapter construction (overridable piece by piece in tests) ----------
 
@@ -122,7 +125,9 @@ class AppContainer:
             self._rag = RagService(
                 settings=self.settings,
                 uow=self.uow,
-                dense_retriever=DenseRetriever(embedder, store, self.settings.retrieval_top_k),
+                dense_retriever=DenseRetriever(
+                    embedder, store, self.settings.retrieval_top_k, self.settings.retrieval_min_score
+                ),
                 lexical_retriever=LexicalRetriever(self.uow, self.settings.retrieval_top_k),
                 context_builder=ContextBuilder(self.settings.max_context_tokens),
                 chat_model=self.build_chat_model(),

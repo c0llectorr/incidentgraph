@@ -3,8 +3,6 @@ rule; the graph wires them as conditional edges."""
 
 from __future__ import annotations
 
-from typing import Any
-
 from app.agents.state import InvestigationState
 
 

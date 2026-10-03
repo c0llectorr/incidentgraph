@@ -83,7 +83,6 @@ class JobManager:
             state = self._jobs.get(job_id)
         if state is None:
             return False
-        deadline = threading.Condition(state.condition)
         import time as _time
 
         end = _time.monotonic() + timeout

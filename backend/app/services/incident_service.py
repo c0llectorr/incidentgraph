@@ -11,7 +11,6 @@ from app.persistence.models import (
     HypothesisRow,
     IncidentArtifactRow,
     IncidentRow,
-    RepositoryRow,
 )
 from app.persistence.repositories import IncidentRepository, RepositoryRepository
 from app.persistence.unit_of_work import UnitOfWork
@@ -50,7 +49,6 @@ class IncidentService:
                 status="pending",
             )
             IncidentRepository().add(session, row)
-            session.expunge(row)
         logger.info("Incident %s created for repository %s", row.id, repository_id)
         return row
 
@@ -79,7 +77,6 @@ class IncidentService:
                 size_bytes=len(encoded),
             )
             IncidentRepository().add_artifact(session, row)
-            session.expunge(row)
         return row
 
     def get(self, incident_id: str) -> IncidentRow:
