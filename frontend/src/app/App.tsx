@@ -1,9 +1,8 @@
-// WP-0 placeholder — replaced by the real shell in WP-14.
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router";
+
+/** Composition root of the frontend. Providers stay minimal by design
+ * (PRD §12.8: small state strategy — React state only for this MVP). */
 export default function App() {
-  return (
-    <main className="min-h-screen bg-ig-bg px-6 py-16 text-ig-navy">
-      <h1 className="text-3xl font-semibold">IncidentGraph</h1>
-      <p className="mt-2 text-ig-muted">Backend is being built; the workspace ships in WP-14.</p>
-    </main>
-  );
+  return <RouterProvider router={router} />;
 }

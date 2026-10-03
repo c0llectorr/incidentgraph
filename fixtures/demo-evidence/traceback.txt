@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "app/main.py", line 46, in checkout
+    total = apply_discount(payload.total, registry.get_rate(payload.discount_code))
+  File "app/discounts.py", line 46, in apply_discount
+    return round(total * (1 - rate / 100), 2)
+TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'

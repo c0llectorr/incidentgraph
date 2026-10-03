@@ -1,0 +1,15 @@
+Diff of the 2026-10-02 checkout release (the change under suspicion —
+note: preceding the incident is NOT proof of causation by itself).
+
+diff --git a/app/main.py b/app/main.py
+index 8a1b2c3..d4e5f67 100644
+--- a/app/main.py
++++ b/app/main.py
+@@ -40,8 +40,7 @@ def checkout(payload: CheckoutPayload) -> CheckoutResponse:
+     if not limiter.allow(payload.username):
+         raise HTTPException(status_code=429, detail="rate limit exceeded")
+-    rate = registry.get_rate(payload.discount_code) or 0.0
+-    total = apply_discount(payload.total, rate)
++    # trust the registry: unknown codes are validated upstream now
++    total = apply_discount(payload.total, registry.get_rate(payload.discount_code))
+     return CheckoutResponse(order_id=f"ord_{int(payload.total * 100)}", total_charged=total)

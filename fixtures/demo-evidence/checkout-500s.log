@@ -1,0 +1,9 @@
+2026-10-03T09:41:12Z ERROR [orders.checkout] unhandled exception request_id=req_5f21a endpoint=POST /orders/checkout status=500
+2026-10-03T09:41:12Z ERROR [uvicorn.error] Exception in ASGI application request_id=req_5f21a
+TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'
+2026-10-03T09:41:47Z ERROR [orders.checkout] unhandled exception request_id=req_5f22c endpoint=POST /orders/checkout status=500
+2026-10-03T09:41:47Z INFO  [orders.checkout] payload contained discount_code=SAVE15 request_id=req_5f22c
+2026-10-03T09:42:03Z ERROR [uvicorn.access] POST /orders/checkout HTTP/1.1 500 request_id=req_5f23b
+2026-10-03T09:42:31Z ERROR [orders.checkout] unhandled exception request_id=req_5f24d endpoint=POST /orders/checkout status=500
+2026-10-03T09:43:10Z INFO  [orders.checkout] payload contained discount_code=SAVE15 request_id=req_5f251
+2026-10-03T09:43:10Z ERROR [uvicorn.access] POST /orders/checkout HTTP/1.1 500 request_id=req_5f251
