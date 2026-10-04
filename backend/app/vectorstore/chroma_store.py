@@ -67,6 +67,19 @@ class ChromaVectorStore:
             ],
         )
 
+    @staticmethod
+    def _where(
+        repository_id: str, index_version: str | None = None
+    ) -> dict[str, object]:
+        """Chroma requires explicit operators: a bare multi-key equality dict
+        is rejected ("Expected where to have exactly one operator")."""
+        conditions: list[dict[str, object]] = [{"repository_id": {"$eq": repository_id}}]
+        if index_version is not None:
+            conditions.append({"index_version": {"$eq": index_version}})
+        if len(conditions) == 1:
+            return conditions[0]
+        return {"$and": conditions}
+
     def search(
         self,
         query_vector: list[float],
@@ -81,7 +94,7 @@ class ChromaVectorStore:
         result = self._collection.query(
             query_embeddings=[query_vector],
             n_results=min(top_k, total),
-            where={"repository_id": repository_id, "index_version": index_version},
+            where=self._where(repository_id, index_version),
             include=["documents", "metadatas", "distances"],
         )
         chunks: list[RetrievedChunk] = []
@@ -106,7 +119,7 @@ class ChromaVectorStore:
         return chunks
 
     def delete_by_repository(self, repository_id: str) -> int:
-        existing = self._collection.get(where={"repository_id": repository_id}, include=[])
+        existing = self._collection.get(where=self._where(repository_id), include=[])
         ids = list(existing.get("ids", []))
         if ids:
             self._collection.delete(ids=ids)
@@ -114,7 +127,7 @@ class ChromaVectorStore:
 
     def count(self, *, repository_id: str, index_version: str) -> int:
         existing = self._collection.get(
-            where={"repository_id": repository_id, "index_version": index_version},
+            where=self._where(repository_id, index_version),
             include=[],
         )
         return len(list(existing.get("ids", [])))
@@ -123,8 +136,15 @@ class ChromaVectorStore:
         if not chunk_ids:
             return {}
         found = self._collection.get(ids=chunk_ids, include=["embeddings"])
+        # Chroma returns embeddings as a NumPy ndarray (or None when nothing
+        # matches). Never evaluate it with `or` — ndarray truthiness is
+        # ambiguous — handle None explicitly and iterate rows directly.
+        embeddings = found.get("embeddings")
+        if embeddings is None:
+            return {}
         vectors: dict[str, list[float]] = {}
-        for chunk_id, embedding in zip(found.get("ids", []), found.get("embeddings", []) or [], strict=False):
+        ids = found.get("ids", [])
+        for chunk_id, embedding in zip(ids, embeddings, strict=False):
             if embedding is not None:
                 vectors[chunk_id] = [float(value) for value in embedding]
         return vectors

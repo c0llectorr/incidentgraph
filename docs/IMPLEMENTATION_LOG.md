@@ -177,3 +177,17 @@ See `docs/SECURITY_CHECKLIST.md` — all 14 controls verified with tests or reco
 6. README quick start corrected; regression test added for the module-level ASGI entry point.
 
 **Verification:** user's exact command (`python -m uvicorn app.main:app --port 8000` from repo root) boots; live `GET /health` → 200; live `POST /repositories` → 201 (proves schema auto-create); invalid URL → §8.6 envelope. `.env` confirmed loadable with CWD=`backend/`. Backend 108/108 tests + ruff clean; frontend TS-strict build green; offline smoke green.
+
+---
+
+## Post-MVP bugfix round — real-Chroma ingestion crash (2026-10-04)
+
+**Symptom (user logs):** ingesting a real GitHub repo (`c0llectorr/madad-v1.1`) crashed at the embedding stage with `ValueError: The truth value of an empty array is ambiguous` from `chroma_store.get_vectors`.
+
+**Root causes (both are real-Chroma behaviors the in-memory test double cannot represent):**
+1. Chroma returns the `embeddings` payload as a NumPy ndarray; the `found.get("embeddings", []) or []` idiom forces ndarray truthiness evaluation, which raises for empty *and* multi-element arrays. Fixed with explicit `None` handling and direct row iteration.
+2. Newer Chroma rejects bare multi-key equality `where` clauses ("Expected where to have exactly one operator") — `search`/`count`/`delete_by_repository` now build explicit `$and`/`$eq` filters via a `_where` helper.
+
+**Regression coverage:** new `tests/integration/test_chroma_store.py` runs the adapter against REAL Chroma (tmp persistence): first-ingestion empty result (the exact crash), empty input, stored-vector round-trip, upsert/search/count with repository isolation, and delete-by-repository. The in-memory double stays for pipeline tests; the adapter now has its own real-adapter suite.
+
+**Verification:** 113/113 tests green (5 new real-Chroma tests), ruff clean.
