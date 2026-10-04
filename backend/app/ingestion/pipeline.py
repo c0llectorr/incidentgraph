@@ -13,6 +13,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from tqdm import tqdm
+
 from app.core.config import Settings
 from app.core.errors import (
     IncidentGraphError,
@@ -117,6 +119,9 @@ class IngestionPipeline:
         self._embedder = embedder
         self._vector_store = vector_store
         self._publish = publish
+        # Console progress bars (developer-facing, tqdm on stderr). The
+        # pipeline instance is per-job, so bars never collide across jobs.
+        self._bars: dict[str, tqdm] = {}
 
     # -- event plumbing -------------------------------------------------------
 
@@ -132,6 +137,10 @@ class IngestionPipeline:
     ) -> None:
         percent, indeterminate = progress.snapshot()
         stage_progress = progress.stage_state(stage)
+        overall_bar = self._bars.get("overall")
+        if overall_bar is not None and percent is not None:
+            overall_bar.n = min(percent, 100.0)
+            overall_bar.refresh()
         self._publish(
             JobEvent(
                 job_id=job_id,
@@ -173,6 +182,12 @@ class IngestionPipeline:
         index_version = new_index_version()
         workspace = self._settings.tmp_dir / job_id
         resolved_sha = repository.commit_sha
+
+        # Developer-facing console bars (PRD goal: honest, detailed ingestion
+        # progress). Overall 0-100 bar mirrors the SSE percentages.
+        self._bars["overall"] = tqdm(
+            total=100, desc="ingestion", unit="%", position=0, ncols=100, leave=True
+        )
 
         try:
             self._update_repository_row(repository_id, status=IndexStatus.INDEXING.value)
@@ -222,6 +237,9 @@ class IngestionPipeline:
             # 6. Parse & chunk --------------------------------------------------------------
             progress.start_stage(IngestionStage.PARSING_AND_CHUNKING, total=len(included) or 1)
             self._emit(job_id, progress, IngestionStage.PARSING_AND_CHUNKING, "running")
+            self._bars["chunk"] = tqdm(
+                total=len(included) or 1, desc="chunking", position=1, unit="file", ncols=100, leave=True
+            )
             chunks, parse_statuses = self._parse_and_chunk(
                 included, repository_id=repository_id, index_version=index_version
             )
@@ -260,13 +278,17 @@ class IngestionPipeline:
                 batches_done += 1
                 progress.advance(IngestionStage.EMBEDDING, units)
                 self._emit(job_id, progress, IngestionStage.EMBEDDING, "running")
+                stage_elapsed = time.monotonic() - embed_stage_started
+                embed_bar = self._bars.get("embed")
+                if embed_bar is not None:
+                    embed_bar.set_postfix(batch=f"{batches_done}/{total_batches}", elapsed=f"{stage_elapsed:.0f}s")
                 logger.info(
                     "Embedded batch %d/%d for %s (%d units, %.1fs into the embed stage)",
                     batches_done,
                     total_batches,
                     repository_id,
                     units,
-                    time.monotonic() - embed_stage_started,
+                    stage_elapsed,
                 )
 
             total_batches = (
@@ -276,6 +298,14 @@ class IngestionPipeline:
             )
             embed_stage_started = time.monotonic()
             batches_done = 0
+            self._bars["embed"] = tqdm(
+                total=len(missing_texts) or 1,
+                desc="embedding",
+                position=2,
+                unit="chunk",
+                ncols=100,
+                leave=True,
+            )
             logger.info(
                 "Embedding %d unique chunks in %d batches (batch_size=%d) for %s "
                 "(first call may load the local model)",
@@ -424,6 +454,9 @@ class IngestionPipeline:
                 error_code="INTERNAL_ERROR",
             )
         finally:
+            for bar in self._bars.values():
+                bar.close()
+            self._bars.clear()
             shutil.rmtree(workspace, ignore_errors=True)
 
     # -- stage helpers ----------------------------------------------------------
@@ -494,7 +527,9 @@ class IngestionPipeline:
     def _parse_and_chunk(self, included: list[PreparedFile], *, repository_id: str, index_version: str):
         chunks: list[CodeChunk] = []
         parse_statuses: dict[str, str] = {}
+        chunk_bar = self._bars.get("chunk")
         for prepared in included:
+            file_started = time.perf_counter()
             if prepared.language == "python":
                 parsed = parse_python(prepared.text, prepared.relative_path)
                 if parsed.parse_error is None:
@@ -532,6 +567,17 @@ class IngestionPipeline:
                 )
                 parse_statuses[prepared.relative_path] = "plain"
             chunks.extend(file_chunks)
+            elapsed_ms = (time.perf_counter() - file_started) * 1000
+            logger.info(
+                "Chunked %s into %d chunks in %.0f ms (%s)",
+                prepared.relative_path,
+                len(file_chunks),
+                elapsed_ms,
+                parse_statuses[prepared.relative_path],
+            )
+            if chunk_bar is not None:
+                chunk_bar.set_description(f"chunking {prepared.relative_path[-52:]}")
+                chunk_bar.update(1)
         return chunks, parse_statuses
 
     def _persist(

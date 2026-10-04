@@ -26,9 +26,6 @@ export default function Sidebar() {
           </li>
         ))}
       </ul>
-      <p className="mt-8 px-3 text-[11px] leading-relaxed text-ig-muted">
-        Python-first MVP. Public repositories and uploaded ZIPs only.
-      </p>
     </nav>
   );
 }

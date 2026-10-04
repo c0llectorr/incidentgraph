@@ -29,3 +29,35 @@ pre {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Trace-line runner: a small pulse that travels from the start of the line
+   to the currently executing stage so progress feels live (PRD §12.5 —
+   "evidence moving through a pipeline"). Gentle 1.8s loop; hidden entirely
+   when the user prefers reduced motion (no rapid flicker). */
+@keyframes trace-runner {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--trace-target, 100%);
+    opacity: 0;
+  }
+}
+
+.trace-runner {
+  animation: trace-runner 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trace-runner {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

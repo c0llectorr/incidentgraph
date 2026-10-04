@@ -211,3 +211,14 @@ See `docs/SECURITY_CHECKLIST.md` — all 14 controls verified with tests or reco
 4. New `tests/unit/test_progress.py` (5 tests): 0–100 scale, mid-embedding ~50/67.5 values, exact 100 only when all stages complete, indeterminate-without-invented-percent, monotonicity.
 
 **Verification:** 118/118 tests green, ruff clean; live SSE capture with the real server shows the corrected percent sequence end-to-end.
+
+---
+
+## UX + observability round — live trace-line, console bars (2026-10-04)
+
+1. **Trace-line runner (§12.5):** a small glowing pulse now travels repeatedly from the start of the line to the currently executing node (CSS keyframes animating `left` to a `--trace-target` custom property, 1.8s gentle loop). Existing bar (nodes, green segment, per-stage checklist, percentage) untouched. `prefers-reduced-motion` hides the runner entirely (no flicker from the global duration-collapse rule).
+2. **Sidebar:** removed the "Python-first MVP. Public repositories and uploaded ZIPs only." note from the main screen (the supported-scope note remains where the PRD requires it, on the intake form).
+3. **Backend console progress (developer-facing):** tqdm bars in the ingestion pipeline — an overall 0–100% bar mirroring the exact SSE percentages, a per-file chunking bar (description shows the file currently being parsed/chunked), and a per-batch embedding bar with `batch=i/N` + elapsed postfix. New INFO logs: per-file "Chunked <path> into N chunks in X ms (strategy)" and per-batch "Embedded batch i/N (units, elapsed)".
+4. Bars are per-job (pipeline instance is per-job), closed in the pipeline's `finally`, and fail-safe in non-TTY contexts.
+
+**Verification:** frontend TS-strict build green; 118/118 backend tests green, ruff clean; offline smoke run shows the live bars and logs rendering through a real ingestion.

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { stageLabel } from "../../lib/format";
 import { useIngestionEvents } from "../../features/ingestion/hooks";
 
@@ -74,6 +75,19 @@ export default function TraceLineLoader({ jobId, onComplete }: TraceLineLoaderPr
                 : `${(activeIndex / (STAGES.length - 1)) * 100}%`,
           }}
         />
+        {/* live runner: a pulse that repeatedly travels from the start of the
+            line to the currently executing stage (PRD §12.5 — "evidence
+            moving through a pipeline"). Everything else stays as-is. */}
+        {!failed && !done && activeIndex >= 0 ? (
+          <span
+            className="trace-runner absolute top-1/2 z-20 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-ig-blue/90 shadow-[0_0_10px_2px_rgba(61,81,133,0.30)]"
+            style={
+              {
+                "--trace-target": `${(activeIndex / (STAGES.length - 1)) * 100}%`,
+              } as CSSProperties
+            }
+          />
+        ) : null}
         {STAGES.map((stage, index) => {
           const isPast = activeIndex > index;
           const isActive = index === activeIndex;
