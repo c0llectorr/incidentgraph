@@ -154,3 +154,26 @@ See `docs/SECURITY_CHECKLIST.md` — all 14 controls verified with tests or reco
 **Final gate results:** backend `pytest` 107/107 green; `ruff check` clean; frontend `tsc -b && vite build` green; offline smoke green. §15.3 items 1–7 verified statically/in-suite; items 8–9 (mobile-width manual pass, provider-key demo) require the user's environment — see DEMO_SCRIPT.
 
 **Known deferred items (per §7 fallback list):** cross-version embedding reuse keyed to configuration fingerprint only (single fingerprint per repository in MVP); Groq provider smoke awaits `GROQ_API_KEY`; manual mobile-width pass.
+
+---
+
+## Post-MVP bugfix round — local run failures (2026-10-04)
+
+**Symptoms (user logs):** `uvicorn app.main:app` → `Attribute "app" not found`; frontend flooded with `ECONNREFUSED` proxy errors and infinite `GET /api/v1/jobs/undefined` polling.
+
+**Root causes found (verified against source):**
+1. `app/main.py` exposed only the `create_app()` factory — no module-level ASGI instance, so the documented uvicorn target was invalid (docs/code mismatch).
+2. `frontend/src/lib/http.ts` returned non-JSON responses as *successful* payloads before checking `response.ok` — when the backend was down, Vite's proxy error page (500, non-JSON) was treated as a valid `Repository`, so the form proceeded with `undefined` IDs and navigated to `/repositories/undefined/ingestions/undefined`.
+3. `frontend/src/lib/sse.ts` re-scheduled its polling fallback unconditionally (malformed payloads skipped, no failure cap) → infinite `/jobs/undefined` polling; `onerror` could also spawn multiple poll chains.
+4. Latent: schema existed only after `alembic upgrade head`; the app never created tables → every request would 500 on a fresh checkout.
+5. Latent: `env_file=".env"` was CWD-relative — the user's root `.env` would be silently missed when launching from `backend/`.
+
+**Fixes:**
+1. `backend/app/main.py`: module-level `app = create_app()` deployment entry point; lifespan now runs idempotent `Base.metadata.create_all` (Alembic stays canonical).
+2. `frontend/src/lib/http.ts`: `response.ok` checked **before** content-type; JSON envelope parsed when present; otherwise a status-derived `ApiError` (5xx flagged as backend-unreachable). Non-JSON success (Markdown export) preserved.
+3. `frontend/src/lib/sse.ts`: single guarded fallback to polling; bounded failures (5) surface a terminal `unknown` event with an actionable message; 404 treated as terminal.
+4. `RepositorySourceForm` validates `repository.id` / `started.job_id` before navigating; `IngestionPage` rejects literal `undefined`/`null` route params.
+5. `backend/app/core/config.py`: `.env` anchored to the repo root (works from any launch directory).
+6. README quick start corrected; regression test added for the module-level ASGI entry point.
+
+**Verification:** user's exact command (`python -m uvicorn app.main:app --port 8000` from repo root) boots; live `GET /health` → 200; live `POST /repositories` → 201 (proves schema auto-create); invalid URL → §8.6 envelope. `.env` confirmed loadable with CWD=`backend/`. Backend 108/108 tests + ruff clean; frontend TS-strict build green; offline smoke green.

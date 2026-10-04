@@ -38,3 +38,6 @@ Thumbs.db
 # Model caches
 models/
 huggingface/
+
+.zcodeignore
+.zcode/

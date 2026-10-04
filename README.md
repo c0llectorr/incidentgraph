@@ -51,9 +51,15 @@ Prerequisites: Python 3.11+, Node 20+, a Groq API key.
 python -m venv .venv
 .venv\Scripts\python -m pip install -e "backend[dev]"     # Windows
 copy .env.example .env                                    # then set GROQ_API_KEY
-cd backend
-..\.venv\Scripts\python -m alembic upgrade head           # create schema
-..\.venv\Scripts\python -m uvicorn app.main:app --port 8000
+# .env is found at the repo root regardless of the launch directory.
+
+# From the repo root (the .venv must be active):
+python -m uvicorn app.main:app --port 8000
+# ...or equivalently: cd backend && ..\.venv\Scripts\python -m uvicorn app.main:app
+
+# The SQLite schema is created automatically on first boot. Alembic
+# (`alembic upgrade head` from backend/) remains the canonical migration
+# tool once you evolve the schema beyond the initial version.
 
 # 2. Frontend (second terminal)
 cd frontend

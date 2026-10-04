@@ -22,6 +22,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import IncidentGraphError
 from app.core.ids import new_request_id
 from app.core.logging import configure_logging, get_logger, get_request_id, set_request_id
+from app.persistence.models import Base
 from app.schemas.common import ErrorEnvelope
 
 logger = get_logger(__name__)
@@ -44,6 +45,11 @@ def _envelope_response(
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     container: AppContainer = app.state.container
+    # Idempotent dev convenience: create the schema when it does not exist so
+    # a fresh checkout boots without a migration step. Alembic remains the
+    # canonical tool for real migrations; create_all is a no-op afterwards.
+    assert container.engine is not None
+    Base.metadata.create_all(bind=container.engine)
     logger.info("IncidentGraph API starting (env=%s)", container.settings.app_env)
     yield
     logger.info("IncidentGraph API stopped")
@@ -105,3 +111,8 @@ def create_app(
 
     app.include_router(api_router, prefix=resolved_settings.api_v1_prefix)
     return app
+
+
+# Deployment entry point: `uvicorn app.main:app` binds this instance.
+# Tests and alternative compositions build their own app via create_app().
+app = create_app()

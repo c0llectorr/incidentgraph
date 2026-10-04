@@ -96,6 +96,23 @@ def test_cors_allows_configured_origin_only(client: TestClient) -> None:
     assert "access-control-allow-origin" not in denied.headers
 
 
+def test_module_level_asgi_entry_point() -> None:
+    """Deployment contract: `uvicorn app.main:app` must find an ASGI instance.
+
+    Regression guard — a missing module-level `app` fails only at deploy
+    time, not in tests that build their own app via create_app().
+    """
+    from app.main import app as module_app
+
+    assert module_app is not None
+    # The lifespan (schema auto-create) runs only in context-manager mode;
+    # health never touches the container, so it is safe to assert directly.
+    with TestClient(module_app) as boot_client:
+        response = boot_client.get("/api/v1/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def test_unhandled_exception_returns_safe_500(tmp_path) -> None:
     settings = make_settings(tmp_path)
     app = create_app(settings=settings, container=AppContainer(settings=settings))

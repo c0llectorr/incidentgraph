@@ -33,7 +33,15 @@ export default function RepositorySourceForm({ onIngestionStarted }: RepositoryS
       const repository = file
         ? await createRepositoryFromZip(file)
         : await createRepositoryFromUrl(githubUrl);
+      // Defense in depth: a malformed success payload must never reach the
+      // navigation (the http layer should catch this first).
+      if (!repository?.id) {
+        throw new Error("The server response did not include a repository ID.");
+      }
       const started = await startIngestion(repository.id);
+      if (!started?.job_id) {
+        throw new Error("The server response did not include an ingestion job ID.");
+      }
       setJobId(started.job_id);
       onIngestionStarted?.(repository.id, started.job_id);
       navigate(`/repositories/${repository.id}/ingestions/${started.job_id}`);

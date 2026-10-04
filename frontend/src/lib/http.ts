@@ -13,6 +13,21 @@ export class ApiError extends Error {
 
 const API_BASE = "/api/v1";
 
+function statusError(response: Response): ApiError {
+  // Covers every non-2xx that did not carry the backend's JSON envelope —
+  // e.g. the Vite dev-proxy's own error page when the API is unreachable.
+  // Failures must NEVER be mistaken for successful payloads.
+  const backendDown = response.status >= 502;
+  return new ApiError({
+    code: `HTTP_${response.status}`,
+    message: backendDown
+      ? `The API server is unreachable (status ${response.status}). Is the backend running on port 8000?`
+      : `Request failed with status ${response.status}.`,
+    request_id: "-",
+    retryable: response.status >= 500 || response.status === 429,
+  });
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
@@ -33,25 +48,25 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     return {} as T;
   }
 
+  // Error status first, regardless of content type: a proxy error page must
+  // surface as an error, not as a malformed payload (PRD §8.6/§6.3).
+  if (!response.ok) {
+    if ((response.headers.get("content-type") ?? "").includes("application/json")) {
+      const payload = (await response.json().catch(() => null)) as { error?: ErrorBody } | null;
+      if (payload?.error) {
+        throw new ApiError(payload.error);
+      }
+    }
+    throw statusError(response);
+  }
+
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
+    // Legitimate non-JSON success: the Markdown report export (FR-41).
     return (await response.text()) as unknown as T;
   }
 
-  const payload = (await response.json()) as unknown;
-  if (!response.ok) {
-    const envelope = payload as { error?: ErrorBody };
-    if (envelope.error) {
-      throw new ApiError(envelope.error);
-    }
-    throw new ApiError({
-      code: "UNKNOWN_ERROR",
-      message: `Request failed with status ${response.status}.`,
-      request_id: "-",
-      retryable: false,
-    });
-  }
-  return payload as T;
+  return (await response.json()) as T;
 }
 
 export const apiGet = <T>(path: string): Promise<T> => api<T>(path);
