@@ -41,3 +41,6 @@ huggingface/
 
 .zcodeignore
 .zcode/
+*.db-shm
+*.db-wal
+*.sqlite3-*
