@@ -1,13 +1,71 @@
-# IncidentGraph — System Architecture & Agent Workflow
+# IncidentGraph — Architecture Diagrams
 
-Render this file's Mermaid blocks in [mermaid.live](https://mermaid.live), or
-paste them into IncidentGraph's own chat (the assistant renders `mermaid`
-blocks natively). The diagrams below mirror the **actual codebase** — module
-names in the graph nodes match folders/classes in `backend/app/` and
-`frontend/src/` — and the annotations reference the PRD requirements each
-element satisfies.
+Render these in [mermaid.live](https://mermaid.live), or paste them into
+IncidentGraph's own chat (it renders `mermaid` blocks natively). Start with
+the overview; the detailed diagrams below mirror the codebase module-for-module.
 
-## 1. System architecture (with the RCA agent workflow)
+## 1. Architecture at a glance
+
+```mermaid
+flowchart LR
+    dev(["Developer"])
+
+    subgraph FE["Frontend · React"]
+        ui["Workspace<br/>chat · citations · diagrams<br/>investigations · reports"]
+    end
+
+    subgraph BE["Backend · FastAPI"]
+        direction LR
+        api["API gateway<br/>REST + SSE progress"]
+        ingest["Ingestion<br/>parse · chunk · embed"]
+        rag["RAG engine<br/>retrieve · cite · answer"]
+        agent["RCA agent<br/>hypothesize · review · report"]
+    end
+
+    subgraph DATA["Storage"]
+        vectors[("Vector index")]
+        sql[("SQLite")]
+    end
+
+    groq["Groq LLM"]
+    repo["GitHub / ZIP"]
+
+    dev --> ui
+    ui <-->|"REST + SSE"| api
+    api --> ingest
+    api --> rag
+    api --> agent
+    ingest <--> repo
+    ingest --> vectors
+    ingest --> sql
+    rag <--> vectors
+    rag --> groq
+    agent <--> vectors
+    agent --> groq
+    agent --> sql
+```
+
+## 2. The RCA agent at a glance
+
+One linear pass, two honest exits — the agent never invents a cause and never
+claims certainty; the developer runs the checks and closes the loop.
+
+```mermaid
+flowchart LR
+    in["incident in<br/>description + evidence"] --> norm["normalize"] --> sig["extract signals"] --> ret["retrieve code<br/>evidence"] --> hyp["draft up to 3<br/>hypotheses"] --> val["validate every<br/>citation"] --> rev["review + report<br/>with checks"] --> out(["verification plan<br/>for the developer"])
+
+    val -. "fabricated citation → one repair" .-> hyp
+    ret -. "no evidence → gap report" .-> out
+    in -. "no evidence attached → ask" .-> out
+```
+
+---
+
+## 3. Detailed system architecture (with the RCA agent workflow)
+
+The detailed view mirrors the codebase module-for-module; node names match
+folders/classes in `backend/app/` and `frontend/src/`, and annotations
+reference the PRD requirements each element satisfies.
 
 ```mermaid
 flowchart TB
@@ -114,7 +172,7 @@ flowchart TB
   inventing hypotheses; no node ever emits a numerical confidence score
   (FR-24/FR-35/FR-44/FR-46).
 
-## 2. Investigation sequence (the agent workflow in time)
+## 4. Investigation sequence (the agent workflow in time)
 
 ```mermaid
 sequenceDiagram
@@ -161,7 +219,7 @@ sequenceDiagram
     UI->>API: POST /incidents/id/outcomes → legal status transitions only
 ```
 
-## 3. Element-to-requirement map
+## 5. Element-to-requirement map
 
 | Diagram element | Code | PRD reference |
 |---|---|---|
