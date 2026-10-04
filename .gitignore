@@ -27,6 +27,7 @@ tmp/
 # Node / frontend
 node_modules/
 frontend/dist/
+*.tsbuildinfo
 *.local
 
 # OS / editor
@@ -44,3 +45,6 @@ huggingface/
 *.db-shm
 *.db-wal
 *.sqlite3-*
+
+# Personal submission artifacts (kept local only)
+/IncidentGraph Architecture Diagram.png

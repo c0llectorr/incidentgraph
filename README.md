@@ -86,6 +86,35 @@ arrive during indexing; for anything beyond small repositories, prefer the
 `remote` embedding provider or a GPU host. Progress is always honest — the
 percentage only advances when real work completes.
 
+## Test the app (5-minute walkthrough)
+
+With the backend and frontend running (Quick start above), this takes you
+through every feature using the files shipped in `fixtures/`:
+
+1. **Ingest a repo.** On the landing page, upload `fixtures/demo-repo/`
+   zipped (or paste any public Python GitHub URL). Watch the trace-line
+   loader — every stage and percentage comes from real backend events, and
+   the terminal shows a tqdm bar per file and per embedding batch. When the
+   bar finishes you land in the workspace.
+2. **Ask the code questions.** Try "where is authentication implemented?"
+   or "what does apply_discount do?" — every answer carries citation chips;
+   click one to see the exact code excerpt and line range. Try asking for
+   "a class diagram of the discount module" — you get a Mermaid box with a
+   copy button.
+3. **Run an investigation.** Create an incident, paste
+   `fixtures/demo-evidence/traceback.txt` and `checkout-500s.log` into the
+   evidence boxes, then hit *Run investigation*. You get competing
+   hypotheses with evidence, a verification checklist, and a report you can
+   export. If you skip the evidence, the workflow stops and asks you to
+   attach it — paste it in the panel on the same page and re-run.
+4. **Test the honesty.** Ask something the repo cannot answer — the
+   assistant says so instead of inventing an answer. Upload a ZIP containing
+   a `.env` or a `model.safetensors` file — they are excluded before
+   indexing, and the ingestion report shows why.
+
+Anything broken? `backend/smoke_offline.py` runs the full stack without any
+API key and should always pass.
+
 ## Environment variables
 
 See `.env.example` for the full list with safe defaults. The important ones:
