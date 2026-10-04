@@ -14,8 +14,9 @@ from app.core.ids import new_verification_id
 from app.domain.enums import InvestigationStatus
 from app.domain.models import RetrievedChunk, Signal, VerificationStep
 from app.llm.output_parsers import (
+    EvidenceReview,
     HypothesisSet,
-    QAAnswer,
+    NormalizedIncident,
 )
 from app.llm.prompts import (
     RCA_HYPOTHESES_SYSTEM_PROMPT,
@@ -69,18 +70,17 @@ class NodeSet:
             f"Description: {state.get('incident_description', '')}\n"
             "Supplied evidence:\n" + ("\n".join(excerpts) or "(none)")
         )
-        result: QAAnswer = self._chat.generate_structured(
+        result: NormalizedIncident = self._chat.generate_structured(
             system_prompt=RCA_NORMALIZE_SYSTEM_PROMPT,
             user_prompt=user_prompt,
-            schema=QAAnswer,
+            schema=NormalizedIncident,
             max_output_tokens=800,
         )
-        summary = result.answer or state.get("incident_description", "")
-        observed = [claim.text for claim in result.claims if claim.source_ids] or (
-            [claim.text for claim in result.claims]
-        )
+        # §11.3: a concise structured summary without adding unsupported
+        # facts; missing fields stay missing (they are never defaulted).
+        observed = [fact.strip() for fact in result.observed_facts if fact.strip()]
         return {
-            "incident_summary": summary,
+            "incident_summary": result.summary or state.get("incident_description", ""),
             "observed_facts": observed,
         }
 
@@ -205,15 +205,20 @@ class NodeSet:
         )
         notes: list[str]
         try:
-            review: QAAnswer = self._chat.generate_structured(
+            review: EvidenceReview = self._chat.generate_structured(
                 system_prompt=RCA_REVIEW_SYSTEM_PROMPT,
                 user_prompt=f"Hypotheses:\n{listing}\n\nEvidence set:\n{evidence_listing}",
-                schema=QAAnswer,
+                schema=EvidenceReview,
                 max_output_tokens=800,
             )
-            notes = [claim.text for claim in review.claims] or (
-                [review.answer] if review.answer else []
-            )
+            notes = []
+            for item in review.hypotheses_review:
+                if not item.valid_citations:
+                    notes.append(f"hypothesis #{item.index}: citations flagged invalid")
+                for assertion in item.unsupported_assertions:
+                    notes.append(f"hypothesis #{item.index}: unsupported assertion — {assertion}")
+                if item.notes:
+                    notes.append(f"hypothesis #{item.index}: {item.notes}")
         except Exception:  # noqa: BLE001 - reviewer must not sink the workflow
             notes = ["Evidence review step could not run; mechanical validation only."]
         merged = list(state.get("review_notes", [])) + [f"Reviewer: {note}" for note in notes]

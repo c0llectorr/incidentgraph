@@ -222,3 +222,18 @@ See `docs/SECURITY_CHECKLIST.md` — all 14 controls verified with tests or reco
 4. Bars are per-job (pipeline instance is per-job), closed in the pipeline's `finally`, and fail-safe in non-TTY contexts.
 
 **Verification:** frontend TS-strict build green; 118/118 backend tests green, ruff clean; offline smoke run shows the live bars and logs rendering through a real ingestion.
+
+---
+
+## Post-MVP bugfix round — investigation workflow validation crash (2026-10-04)
+
+**Symptom (user logs):** clicking "Run investigation" failed the workflow with `ValidationError for QAAnswer: answer — Field required`, input `{'summary': "User reports…"}`.
+
+**Root cause:** the `normalize_incident` and `review_evidence` nodes sent prompts that declare their own JSON shapes (`{"summary", "observed_facts", …}` / `{"hypotheses_review": […]}`) but parsed responses against `QAAnswer` (which requires `answer`). The Groq model obeyed the prompt; Pydantic rejected the parse; the whole graph failed. Test-suite blind spot: the fake chat model returned `QAAnswer` instances directly, bypassing the prompt↔schema pairing — the same adapter-boundary gap as the Chroma round.
+
+**Fixes:**
+1. `llm/output_parsers.py`: dedicated typed contracts — `NormalizedIncident` and `EvidenceReview`/`HypothesisReviewItem` — matching each prompt's declared shape exactly (§7.1 explicit contracts, §14.3 schema validation at boundaries).
+2. `agents/nodes.py`: each node parses against its paired schema; normalize uses `result.summary`/`result.observed_facts`; the reviewer's items map to concrete review notes (invalid-citation flags, unsupported assertions).
+3. **New contract test** (`tests/unit/test_prompt_contracts.py`): extracts the JSON example embedded in every LLM system prompt and validates it against the paired schema, plus a guard that every prompt has a registered pairing — this class of bug now fails in CI, not in production.
+
+**Verification:** 123/123 tests green, ruff clean, and the user's exact flow verified end-to-end against real Groq + real Qwen embeddings using the seeded fixture: ingestion succeeded (28 CPU-encoded chunks, honest 42%→100% progress), then the investigation completed in ~110s — 30 deterministic signals, hypothesis "Missing None-check in apply_discount for expired or unknown discount codes" with citations at `app/discounts.py:39-46` and `app/main.py:39-47`, and a discriminating check referencing the actual request IDs from the evidence logs. FR-33 honored (fewer hypotheses when evidence concentrates on one cause).

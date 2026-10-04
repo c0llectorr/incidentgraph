@@ -25,6 +25,29 @@ class QAAnswer(BaseModel):
     clarifying_question: str | None = None
 
 
+class NormalizedIncident(BaseModel):
+    """Response schema for the RCA normalize_incident node — pairs with
+    RCA_NORMALIZE_SYSTEM_PROMPT (which asks for exactly this shape)."""
+
+    summary: str
+    observed_facts: list[str] = Field(default_factory=list)
+    unresolved_questions: list[str] = Field(default_factory=list)
+
+
+class HypothesisReviewItem(BaseModel):
+    index: int
+    valid_citations: bool = True
+    unsupported_assertions: list[str] = Field(default_factory=list)
+    notes: str | None = None
+
+
+class EvidenceReview(BaseModel):
+    """Response schema for the RCA review_evidence node — pairs with
+    RCA_REVIEW_SYSTEM_PROMPT (the reviewer guardrail)."""
+
+    hypotheses_review: list[HypothesisReviewItem] = Field(default_factory=list)
+
+
 class CitedEvidence(BaseModel):
     source_id: str
     note: str | None = None

@@ -12,8 +12,11 @@ from app.llm.fake import FakeChatModel
 from app.llm.output_parsers import (
     CitedEvidence,
     Claim,
+    EvidenceReview,
     GeneratedHypothesis,
+    HypothesisReviewItem,
     HypothesisSet,
+    NormalizedIncident,
     QAAnswer,
     VerificationDraft,
 )
@@ -140,9 +143,10 @@ def rca_responder():
             # unrelated incidents really do retrieve nothing.
             match = re.search(r"Description: (.*)", call.user_prompt)
             description = match.group(1).strip() if match else "unknown incident"
-            return QAAnswer(
-                answer=description,
-                claims=[Claim(text=description, source_ids=[])],
+            return NormalizedIncident(
+                summary=description,
+                observed_facts=[description],
+                unresolved_questions=[],
             )
         if "hypothesis generator" in call.system_prompt:
             match = _CHK_IN_PROMPT.search(call.user_prompt)
@@ -173,9 +177,16 @@ def rca_responder():
                 ]
             )
         if "evidence reviewer" in call.system_prompt:
-            return QAAnswer(
-                answer="Citations exist in the evidence set; explanations are consistent with the frames.",
-                claims=[Claim(text="Citations check out.", source_ids=[])],
+            return EvidenceReview(
+                hypotheses_review=[
+                    HypothesisReviewItem(
+                        index=0,
+                        valid_citations=True,
+                        unsupported_assertions=[],
+                        notes="Citations exist in the evidence set; explanations are consistent.",
+                    ),
+                    HypothesisReviewItem(index=1, valid_citations=True),
+                ]
             )
         raise AssertionError(f"Unexpected prompt: {call.system_prompt[:80]}")
 
