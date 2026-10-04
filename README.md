@@ -160,9 +160,9 @@ suspicious diff. `docs/DEMO_SCRIPT.md` walks the full §15.3 acceptance path;
 
 ## Deployment
 
-See **[DEPLOYMENT.md](DEPLOYMENT.md)** for a step-by-step free-tier guide
-(frontend on Vercel, backend as a Hugging Face Space Docker container, secret
-handling, and verification checklist). The frontend routes API calls through
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for a step-by-step free-tier, no-credit-card guide
+(frontend on Vercel, backend on Render via `backend/Dockerfile.deploy`, remote
+embeddings via Jina's free API, secret handling, and a verification checklist). The frontend routes API calls through
 one configurable base (`frontend/src/lib/config.ts`): unset
 `VITE_API_BASE_URL` = local dev via the Vite proxy; set it to your backend
 URL in production. The system architecture and RCA agent workflow diagrams

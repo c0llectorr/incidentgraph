@@ -1,0 +1,18 @@
+# Slim dependency set for free-tier deployments (Render/Koyeb: ~512 MB RAM).
+# Excludes sentence-transformers + torch — deployments use
+# EMBEDDING_PROVIDER=remote, so the local model is never loaded and these
+# multi-GB packages would only bloat the image and risk OOM at runtime.
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+pydantic-settings>=2.3
+sqlalchemy>=2.0
+alembic>=1.13
+httpx>=0.27
+python-multipart>=0.0.9
+groq>=0.11
+langgraph>=0.2
+langchain-core>=0.3
+chromadb>=0.5
+tqdm>=4.66

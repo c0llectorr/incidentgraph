@@ -1,0 +1,22 @@
+# Slim deployment image for free hosts (Render free / Koyeb free: ~512 MB RAM).
+# Uses requirements-deploy.txt (no torch / no local embedding model):
+# set EMBEDDING_PROVIDER=remote and the EMBEDDING_REMOTE_* env vars.
+# Listens on $PORT so Render/Koyeb can route to it.
+
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY requirements-deploy.txt ./
+RUN pip install --no-cache-dir -r requirements-deploy.txt
+
+COPY alembic.ini ./
+COPY app ./app
+COPY migrations ./migrations
+
+# The schema auto-creates on startup (app lifespan). Secrets come from the
+# host's environment variables — never baked into the image.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
