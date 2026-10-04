@@ -266,4 +266,11 @@ class NodeSet:
         }
 
     def await_evidence(self, state: InvestigationState) -> dict[str, Any]:
-        return {"status": InvestigationStatus.AWAITING_EVIDENCE.value}
+        return {
+            "status": InvestigationStatus.AWAITING_EVIDENCE.value,
+            "evidence_gaps": [
+                "No evidence artifacts are attached to this incident. Paste the "
+                "failing logs or a Python traceback into the investigation view, "
+                "attach them, and run the investigation again."
+            ],
+        }

@@ -131,6 +131,30 @@ def test_file_filter_matrix(tmp_path) -> None:
     assert file_filter.decide("big.txt", 5000, b"ok").reason == "file exceeds per-file size limit"
 
 
+def test_model_and_tensor_artifacts_are_excluded(tmp_path) -> None:
+    """Users commit trained-model weights into repos; these are opaque binary
+    artifacts — never chunked or embedded (PRD FR-07)."""
+    settings = make_settings(tmp_path)
+    file_filter = FileFilter(settings)
+    model_files = [
+        "models/model.safetensors",
+        "models/weights.pt",
+        "checkpoints/epoch-3.ckpt",
+        "runtime/net.onnx",
+        "encoder.h5",
+        "quantized/net.gguf",
+        "pickled/preprocess.pkl",
+        "tables/data.parquet",
+        "arrays/embeddings.npy",
+        "tf/model.pb",
+    ]
+    for name in model_files:
+        # Even with a "clean-ish" head lacking a null byte, the extension rules
+        # must exclude model artifacts before any content is read.
+        decision = file_filter.decide(name, 100, b"random binary bytes\x01\x02")
+        assert decision.status == "excluded", f"{name} was not excluded"
+
+
 # --- secret scanner --------------------------------------------------------
 
 

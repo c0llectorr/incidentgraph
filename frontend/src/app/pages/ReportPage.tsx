@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import ErrorPanel from "../../components/common/ErrorPanel";
 import ReportView from "../../components/reports/ReportView";
 import type { InvestigationReport } from "../../types/api";
@@ -34,9 +35,18 @@ export default function ReportPage() {
     );
   }
   return (
-    <ReportView
-      report={report}
-      markdownUrl={`/api/v1/incidents/${incidentId}/report?format=markdown`}
-    />
+    <div className="flex flex-col gap-4">
+      {/* Return path: the report must never be a navigation dead end (§12.4). */}
+      <Link
+        to={`/incidents/${incidentId}`}
+        className="inline-flex items-center gap-1 text-xs text-ig-muted hover:text-ig-blue"
+      >
+        <ArrowLeft size={13} aria-hidden /> Back to investigation
+      </Link>
+      <ReportView
+        report={report}
+        markdownUrl={`/api/v1/incidents/${incidentId}/report?format=markdown`}
+      />
+    </div>
   );
 }

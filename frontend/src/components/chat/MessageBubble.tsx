@@ -1,6 +1,7 @@
 import { Bot, CircleHelp } from "lucide-react";
 import type { SourceCitation } from "../../types/api";
 import CitationChip from "./CitationChip";
+import Markdown from "./Markdown";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -40,10 +41,18 @@ export default function MessageBubble({ message, onOpenCitation }: MessageBubble
                 : "border-ig-border bg-ig-surface text-ig-navy"
             }`}
           >
-            <div className="flex items-center gap-2">
-              <Bot size={14} aria-hidden className={insufficient ? "text-ig-muted" : "text-ig-blue"} />
+            <div className="flex items-start gap-2">
+              <Bot size={14} aria-hidden className={insufficient ? "mt-1 shrink-0 text-ig-muted" : "mt-1 shrink-0 text-ig-blue"} />
               <span className="sr-only">{isUser ? "You asked" : "Assistant answered"}</span>
-              <p className="whitespace-pre-wrap">{message.content}</p>
+              <div className="min-w-0 flex-1">
+                {/* Insufficient-evidence answers stay plain text; real answers
+                    render as formatted Markdown (bold, lists, code, Mermaid). */}
+                {insufficient ? (
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                ) : (
+                  <Markdown content={message.content} />
+                )}
+              </div>
             </div>
             {insufficient ? (
               <p className="mt-2 border-t border-ig-border pt-2 text-xs text-ig-muted">

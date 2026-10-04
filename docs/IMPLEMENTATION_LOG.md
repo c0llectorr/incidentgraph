@@ -237,3 +237,26 @@ See `docs/SECURITY_CHECKLIST.md` — all 14 controls verified with tests or reco
 3. **New contract test** (`tests/unit/test_prompt_contracts.py`): extracts the JSON example embedded in every LLM system prompt and validates it against the paired schema, plus a guard that every prompt has a registered pairing — this class of bug now fails in CI, not in production.
 
 **Verification:** 123/123 tests green, ruff clean, and the user's exact flow verified end-to-end against real Groq + real Qwen embeddings using the seeded fixture: ingestion succeeded (28 CPU-encoded chunks, honest 42%→100% progress), then the investigation completed in ~110s — 30 deterministic signals, hypothesis "Missing None-check in apply_discount for expired or unknown discount codes" with citations at `app/discounts.py:39-46` and `app/main.py:39-47`, and a discriminating check referencing the actual request IDs from the evidence logs. FR-33 honored (fewer hypotheses when evidence concentrates on one cause).
+
+---
+
+## UX round — chat markdown/diagrams, investigation flow, binary safety (2026-10-04)
+
+1. **Chat rendering:** assistant answers now render as real Markdown — bold/italics/lists/tables (remark-gfm), syntax-highlighted code blocks (rehype-highlight + highlight.js tokens tuned to the palette), prose theme via @tailwindcss/typography. Insufficient-evidence answers stay plain text by design.
+2. **Diagrams:** the Q&A system prompt now instructs the model to answer diagram/architecture/flow/class requests with a fenced ```mermaid block (derived from cited evidence, never ASCII art). `MermaidBlock` renders the diagram in a dedicated box with a Copy-code button (paste into mermaid.live), graceful error fallback, and lazy `import("mermaid")` so the library ships as a separate on-demand chunk.
+3. **Investigation flow fixes:** (a) `await_evidence` now persists an explicit evidence-gap message (§11.1 stop-and-clarify behavior unchanged); (b) the investigation page shows a clear callout when stopped for missing evidence; (c) a new EvidenceAttach panel lets users paste tracebacks/logs onto an existing incident — previously evidence could only be added at creation, making `awaiting_evidence` a dead end; (d) ReportPage gained a "Back to investigation" link; (e) IngestionProgress navigates via the router (no more full page reload back to the workspace).
+4. **Binary safety:** `.safetensors/.pt/.ckpt/.onnx/.h5/.gguf/.pkl/.parquet/.npy/.pb/…` model and tensor artifacts are excluded by extension before any content is read (FR-07 — never chunked or embedded); archive extractor additionally rejects unreasonably long member names (archive-flooding pattern); existing zip-bomb defenses (compression ratio before size cap, total/per-entry budgets, count caps, traversal/symlink rejection) unchanged. New test pins the model-file exclusion matrix.
+
+**Verification:** 124/124 backend tests green, ruff clean; frontend TS-strict build green with mermaid code-split into an on-demand chunk.
+
+
+---
+
+## UX round — chat markdown/diagrams, investigation flow, binary safety (2026-10-04)
+
+1. **Chat rendering:** assistant answers now render as real Markdown — bold/italics/lists/tables (remark-gfm), syntax-highlighted code blocks (rehype-highlight + highlight.js tokens tuned to the palette), prose theme via @tailwindcss/typography. Insufficient-evidence answers stay plain text by design.
+2. **Diagrams:** the Q&A system prompt now instructs the model to answer diagram/architecture/flow/class requests with a fenced mermaid block (derived from cited evidence, never ASCII art). MermaidBlock renders the diagram in a dedicated box with a Copy-code button (paste into mermaid.live), graceful error fallback, and lazy import("mermaid") so the library ships as a separate on-demand chunk.
+3. **Investigation flow fixes:** (a) await_evidence now persists an explicit evidence-gap message (§11.1 stop-and-clarify behavior unchanged); (b) the investigation page shows a clear callout when stopped for missing evidence; (c) a new EvidenceAttach panel lets users paste tracebacks/logs onto an existing incident — previously evidence could only be added at creation, making awaiting_evidence a dead end; (d) ReportPage gained a "Back to investigation" link; (e) IngestionProgress navigates via the router (no more full page reload back to the workspace).
+4. **Binary safety:** .safetensors/.pt/.ckpt/.onnx/.h5/.gguf/.pkl/.parquet/.npy/.pb model and tensor artifacts are excluded by extension before any content is read (FR-07 — never chunked or embedded); archive extractor additionally rejects unreasonably long member names (archive-flooding pattern); existing zip-bomb defenses (compression ratio before size cap, total/per-entry budgets, count caps, traversal/symlink rejection) unchanged. New test pins the model-file exclusion matrix.
+
+**Verification:** 124/124 backend tests green, ruff clean; frontend TS-strict build green with mermaid code-split into an on-demand chunk.

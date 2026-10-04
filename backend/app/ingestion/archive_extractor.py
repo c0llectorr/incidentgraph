@@ -88,6 +88,9 @@ class ArchiveExtractor:
 
     def _safe_relative(self, info: zipfile.ZipInfo, prefix: str | None) -> PurePosixPath:
         name = info.filename.replace("\\", "/")
+        if len(name) > 400:
+            # Absurdly long member names are an archive-flooding pattern.
+            raise ArchiveUnsafeError("Archive member name is unreasonably long.")
         pure = PurePosixPath(name)
         if pure.is_absolute() or (len(name) > 1 and name[1] == ":"):
             raise ArchiveUnsafeError("Archive contains absolute paths.")

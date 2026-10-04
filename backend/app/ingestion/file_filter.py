@@ -35,6 +35,12 @@ EXCLUDED_SUFFIXES = {
     ".zip", ".gz", ".tgz", ".tar", ".bz2", ".7z", ".rar",
     ".whl", ".egg", ".pdf", ".doc", ".docx", ".woff", ".woff2", ".ttf", ".eot",
     ".db", ".sqlite", ".sqlite3", ".class", ".jar", ".o", ".a", ".obj",
+    # Trained-model / tensor artifacts (PRD FR-07: large binaries — never
+    # chunked or embedded; they are opaque bytes, not code).
+    ".pt", ".pth", ".ckpt", ".onnx", ".h5", ".hdf5", ".keras", ".tflite",
+    ".pb", ".safetensors", ".gguf", ".ggml", ".mlmodel", ".engine",
+    ".pkl", ".pickle", ".msgpack", ".npz", ".npy", ".parquet", ".arrow",
+    ".weights", ".data", ".index", ".graph", ".mlpackage",
 }
 
 # Lockfiles excluded "where not useful" (PRD FR-07): dependency-resolution

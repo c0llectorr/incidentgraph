@@ -129,6 +129,19 @@ LangGraph investigation workflow, and the deletion cascade.
 suspicious diff. `docs/DEMO_SCRIPT.md` walks the full §15.3 acceptance path;
 `docs/EVALUATION.md` documents the metrics protocol.
 
+## Chat & diagrams
+
+Assistant answers render as full **Markdown** — bold/italics, lists, tables,
+inline code, and syntax-highlighted code blocks. When you ask for a diagram
+(architecture, flow, sequence, or class diagram), the assistant is instructed
+to return a fenced ```mermaid block instead of ASCII art; the UI renders it
+in a dedicated box with a **Copy code** button so you can paste it straight
+into [mermaid.live](https://mermaid.live). Diagrams are derived from the same
+cited repository evidence as prose answers.
+
+The chat prompt contract (§10.2 rules + diagram rule) is pinned by tests
+(`tests/unit/test_prompt_contracts.py`).
+
 ## Privacy & security
 
 - User-supplied code and incident evidence **may be sent to the configured
@@ -142,8 +155,12 @@ suspicious diff. `docs/DEMO_SCRIPT.md` walks the full §15.3 acceptance path;
   (prompt-injection defense); citations are mechanically validated against
   the retrieved evidence set.
 - GitHub fetches are host-allow-listed (SSRF fail-closed), archives are
-  extracted into an isolated workspace with traversal/symlink/bomb guards,
-  and no extracted code is ever executed.
+  extracted into an isolated workspace with traversal/symlink/bomb guards
+  (compression-ratio bomb detection, total/per-entry byte budgets, file-count
+  and member-name limits), and no extracted code is ever executed. Trained
+  model and tensor artifacts (`.pt`, `.safetensors`, `.onnx`, `.gguf`,
+  `.pkl`, `.parquet`, …) are excluded by extension before any content is
+  read — they are opaque binaries, never chunked or embedded.
 - See `docs/SECURITY_CHECKLIST.md` for the complete control list.
 
 ### Deployment note (MVP)

@@ -8,6 +8,7 @@ import StatusBadge from "../../components/common/StatusBadge";
 import HypothesisCard from "../../components/incidents/HypothesisCard";
 import InvestigationSummary from "../../components/incidents/InvestigationSummary";
 import VerificationChecklist from "../../components/incidents/VerificationChecklist";
+import EvidenceAttach from "../../components/incidents/EvidenceAttach";
 import SourceDrawer from "../../components/chat/SourceDrawer";
 import type { IncidentDetail, SourceCitation } from "../../types/api";
 import { getIncident } from "../../features/incidents/api";
@@ -98,6 +99,22 @@ export default function InvestigationPage() {
       </header>
 
       {error ? <ErrorPanel error={error} onRetry={investigate} /> : null}
+
+      {detail.status === "awaiting_evidence" ? (
+        <div
+          role="alert"
+          className="rounded-lg border border-ig-border bg-ig-bg p-4 text-sm text-ig-navy"
+        >
+          <p className="font-medium">No incident evidence attached yet.</p>
+          <p className="mt-1 text-ig-muted">
+            The workflow stopped before generating hypotheses — by design it never
+            invents them without evidence. Paste the failing traceback or logs
+            below, attach them, then run the investigation again.
+          </p>
+        </div>
+      ) : null}
+
+      <EvidenceAttach incidentId={incidentId} onAttached={() => void load()} />
 
       <InvestigationSummary
         signals={detail.normalized_signals}

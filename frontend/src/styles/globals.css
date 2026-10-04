@@ -61,3 +61,67 @@ pre {
     opacity: 0 !important;
   }
 }
+
+/* Chat markdown: inline code, fenced code blocks, and highlight.js tokens —
+   tuned to the IncidentGraph palette for readability (PRD §12.8 chat
+   readability: legible code blocks). */
+.prose :not(pre) > code {
+  background-color: var(--ig-bg);
+  border: 1px solid var(--ig-border);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.3rem;
+  font-weight: 500;
+  color: var(--ig-navy);
+}
+
+.prose pre {
+  background-color: #f0f2f7;
+  border: 1px solid var(--ig-border);
+  border-radius: 0.5rem;
+  color: var(--ig-navy);
+}
+
+.prose pre code {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+/* highlight.js token colors (github-light style, tuned slightly for contrast) */
+.hljs-comment,
+.hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal {
+  color: #b3508a;
+}
+.hljs-string,
+.hljs-attr {
+  color: #2c7a4b;
+}
+.hljs-number,
+.hljs-symbol {
+  color: #a3541c;
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-section {
+  color: #2b5aa7;
+  font-weight: 600;
+}
+.hljs-type,
+.hljs-class .hljs-title,
+.hljs-built_in {
+  color: #8a5a2b;
+}
+.hljs-meta,
+.hljs-punctuation {
+  color: var(--ig-muted);
+}
+.hljs-variable,
+.hljs-template-variable {
+  color: #9c3c3c;
+}

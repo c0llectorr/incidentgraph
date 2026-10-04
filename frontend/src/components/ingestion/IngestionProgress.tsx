@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../common/Button";
 import ErrorPanel from "../common/ErrorPanel";
 import TraceLineLoader from "../common/TraceLineLoader";
@@ -9,20 +10,22 @@ interface IngestionProgressProps {
 }
 
 /** Screen 2 (PRD §12.4): staged progress view driven entirely by backend
- * events, with cancel/retry-on-error behavior. */
+ * events, with retry-on-error behavior. Navigation is SPA-based — no full
+ * page reload. */
 export default function IngestionProgress({ jobId, repositoryId }: IngestionProgressProps) {
+  const navigate = useNavigate();
   const [failed, setFailed] = useState(false);
   const [key, setKey] = useState(0);
 
   const onComplete = useCallback(
     (status: string) => {
       if (status === "succeeded") {
-        window.location.assign(`/repositories/${repositoryId}`);
+        navigate(`/repositories/${repositoryId}`, { replace: true });
       } else {
         setFailed(true);
       }
     },
-    [repositoryId],
+    [navigate, repositoryId],
   );  return (
     <section className="flex flex-col gap-4" aria-label="Ingestion progress">
       <header>
