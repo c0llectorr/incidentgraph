@@ -68,8 +68,9 @@ class ProgressTracker:
             progress.completed = progress.total
 
     def snapshot(self) -> tuple[float, bool]:
-        """Returns (percent, indeterminate). Percent is monotonic across calls
-        and only reaches 100.0 when every stage is fully complete."""
+        """Returns (percent, indeterminate) with percent on a 0–100 scale
+        (PRD §12.6: "fetch 5%, chunk 29%, embed 80%"). Percent is monotonic
+        across calls and only reaches 100.0 when every stage is complete."""
         percent = 0.0
         indeterminate = False
         for stage in _STAGE_ORDER:
@@ -81,6 +82,6 @@ class ProgressTracker:
                     break
                 continue
             percent += weight * progress.fraction
-        percent = min(100.0, percent)
+        percent = min(100.0, percent) * 100
         self._last_percent = max(self._last_percent, percent)
-        return round(self._last_percent, 2), indeterminate
+        return round(self._last_percent, 1), indeterminate

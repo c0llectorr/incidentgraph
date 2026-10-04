@@ -79,6 +79,13 @@ cannot load it, set `EMBEDDING_PROVIDER=remote` plus
 `EMBEDDING_REMOTE_MODEL` (any OpenAI-compatible `/embeddings` endpoint).
 Do not assume Groq serves embeddings — it serves the chat model only.
 
+**CPU performance note:** local embedding on CPU is *slow* — measured at
+tens of seconds per chunk-sized text on a consumer laptop (a 64-text batch
+ran 20+ minutes). `EMBEDDING_BATCH_SIZE` defaults to 16 so progress events
+arrive during indexing; for anything beyond small repositories, prefer the
+`remote` embedding provider or a GPU host. Progress is always honest — the
+percentage only advances when real work completes.
+
 ## Environment variables
 
 See `.env.example` for the full list with safe defaults. The important ones:

@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     embedding_remote_base_url: str = ""
     embedding_remote_api_key: str = ""
     embedding_remote_model: str = ""
-    embedding_batch_size: int = 64
+    embedding_batch_size: int = 16  # small batches: CPU encode is slow; each completed batch publishes a progress event
     embedding_max_retries: int = 4
     github_timeout_seconds: float = 30.0
     llm_timeout_seconds: float = 60.0

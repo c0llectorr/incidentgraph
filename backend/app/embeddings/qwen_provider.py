@@ -11,6 +11,8 @@ index metadata.
 
 from __future__ import annotations
 
+import time
+
 import httpx
 
 from app.core.config import Settings
@@ -61,6 +63,7 @@ class QwenEmbeddingProvider:
                 "sentence-transformers is not installed; install it or set "
                 "EMBEDDING_PROVIDER=remote with a compatible endpoint."
             ) from exc
+        load_started = time.monotonic()
         logger.info("Loading local embedding model %s (first run downloads it)", self._model_id)
         self._model = SentenceTransformer(self._settings.qwen_embedding_model)
         # sentence-transformers renamed the accessor; fall back for older pins.
@@ -68,6 +71,13 @@ class QwenEmbeddingProvider:
             self._model, "get_embedding_dimension", None
         ) or self._model.get_sentence_embedding_dimension
         self._dimension = int(dimension_getter())
+        logger.info(
+            "Local embedding model %s loaded in %.1fs (dimension=%d, device=%s)",
+            self._model_id,
+            time.monotonic() - load_started,
+            self._dimension,
+            getattr(self._model, "device", "unknown"),
+        )
 
     def _embed_local(self, texts: list[str]) -> list[list[float]]:
         self._load_local()

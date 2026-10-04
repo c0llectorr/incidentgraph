@@ -191,3 +191,23 @@ See `docs/SECURITY_CHECKLIST.md` — all 14 controls verified with tests or reco
 **Regression coverage:** new `tests/integration/test_chroma_store.py` runs the adapter against REAL Chroma (tmp persistence): first-ingestion empty result (the exact crash), empty input, stored-vector round-trip, upsert/search/count with repository isolation, and delete-by-repository. The in-memory double stays for pipeline tests; the adapter now has its own real-adapter suite.
 
 **Verification:** 113/113 tests green (5 new real-Chroma tests), ruff clean.
+
+---
+
+## Post-MVP bugfix round — frozen "1%" during embedding (2026-10-04)
+
+**Symptom (user logs):** ingestion of a real GitHub repo appeared stuck at the embedding stage with the UI frozen at "1%"; the server log went silent after the local embedding model loaded.
+
+**Diagnosis (all verified empirically):**
+1. **Percent unit mismatch (the "1%").** `ProgressTracker.snapshot()` returned 0–1 fractions (0.42, 0.77) while §12.6 defines percent on a 0–100 scale ("fetch 5%, chunk 29%, embed 80%") — and the frontend renders `Math.round(percent)`. So "0.77" displayed as a frozen "1%". The `ready` event inconsistently hard-coded 100.0, masking the bug in monotonicity tests.
+2. **CPU encode is genuinely slow.** Live SSE capture with the real app + real Qwen3-Embedding on CPU showed 43 seconds of silence for just 3 chunks; the benchmark batch of 64 texts ran 20+ minutes without completing. With the old `EMBEDDING_BATCH_SIZE=64`, the first progress event would arrive after 20+ minutes — experienced as "stuck".
+3. **SSE delivery itself verified healthy** — raw byte-level capture showed all events and 10s heartbeats flowing through the real server.
+4. Latent test-exposed bug: the new per-batch log line had a malformed format string (5 specifiers, 4 args); pytest's log capture re-raises what stdlib logging swallows, so the suite caught it immediately.
+
+**Fixes:**
+1. `ingestion/progress.py`: `snapshot()` now returns 0–100 (monotonic, indeterminate unchanged). Verified live: SSE stream shows 2 → 12 → 17 → 42 → 77 → 87 → 100.
+2. `config.py` + `.env.example`: `EMBEDDING_BATCH_SIZE` 64 → 16 (per-batch progress events every ~30–60s on CPU instead of every 20+ minutes).
+3. Observability (§6.2/FR-47): INFO logs for embed-stage start (chunks/batches/batch-size), each completed batch (units + elapsed), and model load completion (duration/dimension/device).
+4. New `tests/unit/test_progress.py` (5 tests): 0–100 scale, mid-embedding ~50/67.5 values, exact 100 only when all stages complete, indeterminate-without-invented-percent, monotonicity.
+
+**Verification:** 118/118 tests green, ruff clean; live SSE capture with the real server shows the corrected percent sequence end-to-end.

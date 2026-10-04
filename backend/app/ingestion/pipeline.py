@@ -8,6 +8,7 @@ chunks and vectors are queryable (§9.1 step 11, §6.2).
 from __future__ import annotations
 
 import shutil
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -255,8 +256,34 @@ class IngestionPipeline:
             ]
 
             def _on_batch_done(units: int) -> None:
+                nonlocal batches_done
+                batches_done += 1
                 progress.advance(IngestionStage.EMBEDDING, units)
                 self._emit(job_id, progress, IngestionStage.EMBEDDING, "running")
+                logger.info(
+                    "Embedded batch %d/%d for %s (%d units, %.1fs into the embed stage)",
+                    batches_done,
+                    total_batches,
+                    repository_id,
+                    units,
+                    time.monotonic() - embed_stage_started,
+                )
+
+            total_batches = (
+                -(-len(missing_texts) // self._settings.embedding_batch_size)
+                if missing_texts
+                else 0
+            )
+            embed_stage_started = time.monotonic()
+            batches_done = 0
+            logger.info(
+                "Embedding %d unique chunks in %d batches (batch_size=%d) for %s "
+                "(first call may load the local model)",
+                len(missing_texts),
+                total_batches,
+                self._settings.embedding_batch_size,
+                repository_id,
+            )
 
             if missing_texts:
                 batch_result = embed_in_batches(
