@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import ErrorPanel from "../../components/common/ErrorPanel";
 import ReportView from "../../components/reports/ReportView";
 import type { InvestigationReport } from "../../types/api";
+import { API_BASE } from "../../lib/config";
 import { apiGet } from "../../lib/http";
 
 export default function ReportPage() {
@@ -45,7 +46,7 @@ export default function ReportPage() {
       </Link>
       <ReportView
         report={report}
-        markdownUrl={`/api/v1/incidents/${incidentId}/report?format=markdown`}
+        markdownUrl={`${API_BASE}/incidents/${incidentId}/report?format=markdown`}
       />
     </div>
   );

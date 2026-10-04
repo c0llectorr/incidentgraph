@@ -129,6 +129,17 @@ LangGraph investigation workflow, and the deletion cascade.
 suspicious diff. `docs/DEMO_SCRIPT.md` walks the full §15.3 acceptance path;
 `docs/EVALUATION.md` documents the metrics protocol.
 
+## Deployment
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for a step-by-step free-tier guide
+(frontend on Vercel, backend as a Hugging Face Space Docker container, secret
+handling, and verification checklist). The frontend routes API calls through
+one configurable base (`frontend/src/lib/config.ts`): unset
+`VITE_API_BASE_URL` = local dev via the Vite proxy; set it to your backend
+URL in production. The system architecture and RCA agent workflow diagrams
+live in **[DIAGRAM.md](DIAGRAM.md)** (validatable with
+`node check-diagrams.mjs` from `frontend/`).
+
 ## Chat & diagrams
 
 Assistant answers render as full **Markdown** — bold/italics, lists, tables,

@@ -1,4 +1,5 @@
 import type { ErrorBody } from "../types/api";
+import { API_BASE } from "./config";
 
 /** Typed error carrying the backend's §8.6 envelope. */
 export class ApiError extends Error {
@@ -10,8 +11,6 @@ export class ApiError extends Error {
     this.body = body;
   }
 }
-
-const API_BASE = "/api/v1";
 
 function statusError(response: Response): ApiError {
   // Covers every non-2xx that did not carry the backend's JSON envelope —

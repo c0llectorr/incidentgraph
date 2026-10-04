@@ -1,4 +1,5 @@
 import type { JobEventPayload } from "../types/api";
+import { API_BASE } from "./config";
 
 /** Consecutive failed/malformed polls before giving up honestly (the stream
  * must not retry forever when the API is unreachable — PRD §6.3/§12.8). */
@@ -59,7 +60,7 @@ export function subscribeToJobEvents(
     const poll = async () => {
       if (closed) return;
       try {
-        const response = await fetch(`/api/v1/jobs/${jobId}`);
+        const response = await fetch(`${API_BASE}/jobs/${jobId}`);
         if (response.ok) {
           const event = (await response.json().catch(() => null)) as JobEventPayload | null;
           if (event && typeof event.status === "string") {
@@ -100,7 +101,7 @@ export function subscribeToJobEvents(
   };
 
   try {
-    source = new EventSource(`/api/v1/jobs/${jobId}/events`);
+    source = new EventSource(`${API_BASE}/jobs/${jobId}/events`);
     source.addEventListener("progress", (message) => {
       try {
         const event = JSON.parse((message as MessageEvent<string>).data) as JobEventPayload;
